@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Atrapa la Estrella PRO</title>
+<style>
+*{box-sizing:border-box} body{margin:0;font-family:system-ui,sans-serif;background:#0f172a;color:#fff;text-align:center}
+.ad{width:100%;max-width:480px;height:90px;background:#1e293b;margin:10px auto;display:flex;align-items:center;justify-content:center;color:#94a3b8;border:1px dashed #475569}
+#wrap{max-width:480px;margin:auto;padding:10px}
+#hud{display:flex;justify-content:space-between;font-size:18px;margin:10px 0}
+#game{width:100%;height:420px;background:radial-gradient(circle at 50% 30%, #1e3a8a, #020617);position:relative;overflow:hidden;border-radius:16px;border:2px solid #38bdf8;touch-action:none}
+#star{width:60px;height:60px;position:absolute;font-size:50px;line-height:60px;cursor:pointer;user-select:none;transition:transform .1s}
+#star:active{transform:scale(1.3)}
+.btn{background:#38bdf8;color:#000;border:none;padding:15px 30px;font-size:20px;border-radius:12px;font-weight:bold;cursor:pointer;margin:10px}
+#overlay{position:absolute;inset:0;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="ad">PEGÁ TU ANUNCIO AQUÍ - Banner Top 320x100</div>
+
+<div id="wrap">
+<h1>⭐ Atrapa la Estrella</h1>
+<div id="hud"><div>⭐ <span id="score">0</span></div><div>❤️ <span id="lives">3</span></div><div>🏆 <span id="best">0</span></div></div>
+<div id="hud2">Nivel: <span id="level">1</span> | Tiempo: <span id="time">30</span>s</div>
+
+<div id="game">
+<div id="overlay">
+<h2 id="title">¿Listo?</h2>
+<p id="msg">Tocá las estrellas antes que desaparezcan.<br>No toques las bombas 💣</p>
+<button class="btn" onclick="startGame()">JUGAR</button>
+</div>
+<div id="star">⭐</div>
+</div>
+
+<p style="color:#94a3b8;font-size:14px">Cada 10 estrellas = subís de nivel y va más rápido</p>
+</div>
+
+<div class="ad">PEGÁ TU ANUNCIO AQUÍ - Banner Bottom</div>
+
+<script>
+let score=0,lives=3,level=1,time=30,playing=false,timer,moveTimer;
+let best=localStorage.getItem('best')||0;
+document.getElementById('best').innerText=best;
+const starEl=document.getElementById('star');
+const gameEl=document.getElementById('game');
+const overlay=document.getElementById('overlay');
+
+function sound(freq){ try{ const c=new (window.AudioContext||window.webkitAudioContext)(); const o=c.createOscillator(); const g=c.createGain(); o.connect(g); g.connect(c.destination); o.frequency.value=freq; o.type='sine'; g.gain.setValueAtTime(0.2,c.currentTime); o.start(); o.stop(c.currentTime+0.15);}catch(e){} }
+
+function randomPos(){
+  starEl.style.left=Math.random()*(gameEl.clientWidth-60)+'px';
+  starEl.style.top=Math.random()*(gameEl.clientHeight-60)+'px';
+}
+
+function nextItem(){
+  if(!playing) return;
+  // 20% chance bomba en niveles altos
+  let isBomb = Math.random() < (0.1 + level*0.03);
+  starEl.innerText = isBomb ? '💣' : '⭐';
+  starEl.dataset.bomb = isBomb ? '1' : '0';
+  randomPos();
+}
+
+starEl.addEventListener('pointerdown', ()=>{
+  if(!playing) return;
+  if(starEl.dataset.bomb==='1'){
+    lives--; sound(150); document.getElementById('lives').innerText=lives;
+    if(lives<=0) endGame();
+  } else {
+    score++; sound(800); document.getElementById('score').innerText=score;
+    if(score%10===0){ level++; document.getElementById('level').innerText=level; clearInterval(moveTimer); moveTimer=setInterval(nextItem, Math.max(400, 1200-level*100)); }
+    // Simula anuncio intersticial cada 25 puntos
+    if(score%25===0){ /* aquí ponés tu código: showInterstitialAd() */ }
+  }
+  nextItem();
+});
+
+function startGame(){
+  score=0; lives=3; level=1; time=30; playing=true;
+  document.getElementById('score').innerText=0;
+  document.getElementById('lives').innerText=3;
+  document.getElementById('level').innerText=1;
+  document.getElementById('time').innerText=30;
+  overlay.classList.add('hidden');
+  randomPos(); nextItem();
+  clearInterval(timer); clearInterval(moveTimer);
+  timer=setInterval(()=>{
+    time--; document.getElementById('time').innerText=time;
+    if(time<=0) endGame();
+  },1000);
+  moveTimer=setInterval(nextItem,1100);
+}
+
+function endGame(){
+  playing=false; clearInterval(timer); clearInterval(moveTimer);
+  if(score>best){ best=score; localStorage.setItem('best',best); }
+  document.getElementById('best').innerText=best;
+  document.getElementById('title').innerText='¡Fin del juego!';
+  document.getElementById('msg').innerHTML=`Hiciste <b>${score}</b> puntos<br>Récord: ${best}<br><br><div style="background:#1e293b;padding:10px">ANUNCIO INTERSTICIAL AQUÍ</div>`;
+  overlay.classList.remove('hidden');
+  // Aquí llamarías a tu anuncio real
+}
+</script>
+</body>
+</html>
