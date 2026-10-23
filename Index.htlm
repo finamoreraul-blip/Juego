@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Criollo Bet - Casino & iGaming Suite</title>
+  <title>Criollo Bet - Casino Criollo & Live Sportsbook Engine</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -15,7 +15,7 @@
   <!-- Babel Compiler for JSX -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  <!-- Tailwind Configuration -->
+  <!-- Tailwind Custom Colors Configuration -->
   <script>
     tailwind.config = {
       theme: {
@@ -39,8 +39,8 @@
 
   <style>
     body {
-      background-color: #0b0f19;
-      color: #e2e8f0;
+      background-color: #080c14;
+      color: #f1f5f9;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     }
     .scrollbar-thin::-webkit-scrollbar {
@@ -54,6 +54,13 @@
       background: #334155;
       border-radius: 3px;
     }
+    @keyframes cardDrop {
+      0% { transform: translateY(-30px) scale(0.8); opacity: 0; }
+      100% { transform: translateY(0) scale(1); opacity: 1; }
+    }
+    .animate-card-drop {
+      animation: cardDrop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
   </style>
 </head>
 <body class="min-h-screen bg-slate-950 text-slate-100 overflow-x-hidden">
@@ -63,7 +70,7 @@
   <script type="text/babel">
     const { useState, useEffect } = React;
 
-    // --- Web Audio Engine ---
+    // --- Web Audio Synthesizer Engine ---
     const playSound = (type) => {
       try {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -78,65 +85,79 @@
 
         if (type === 'card') {
           osc.type = 'triangle';
-          osc.frequency.setValueAtTime(300, now);
-          osc.frequency.exponentialRampToValueAtTime(100, now + 0.08);
-          gain.gain.setValueAtTime(0.3, now);
-          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+          osc.frequency.setValueAtTime(320, now);
+          osc.frequency.exponentialRampToValueAtTime(110, now + 0.09);
+          gain.gain.setValueAtTime(0.35, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.09);
           osc.start(now);
-          osc.stop(now + 0.08);
+          osc.stop(now + 0.09);
         } else if (type === 'chip') {
           osc.type = 'sine';
-          osc.frequency.setValueAtTime(800, now);
-          osc.frequency.exponentialRampToValueAtTime(1200, now + 0.05);
-          gain.gain.setValueAtTime(0.2, now);
-          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+          osc.frequency.setValueAtTime(850, now);
+          osc.frequency.exponentialRampToValueAtTime(1250, now + 0.06);
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.06);
           osc.start(now);
-          osc.stop(now + 0.05);
+          osc.stop(now + 0.06);
         } else if (type === 'win') {
           osc.type = 'square';
           osc.frequency.setValueAtTime(523.25, now);
-          osc.frequency.setValueAtTime(659.25, now + 0.1);
-          osc.frequency.setValueAtTime(783.99, now + 0.2);
-          gain.gain.setValueAtTime(0.15, now);
-          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+          osc.frequency.setValueAtTime(659.25, now + 0.12);
+          osc.frequency.setValueAtTime(783.99, now + 0.24);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
           osc.start(now);
-          osc.stop(now + 0.4);
+          osc.stop(now + 0.45);
         }
       } catch (e) {
-        // Fallback silent
+        // Fallback
       }
     };
 
-    // --- Sample Data ---
-    const LIVE_TABLES = [
-      { id: 'T-101', name: 'Mesa Quilmes 1v1', game: 'Truco', mode: '1v1', buyIn: 5000, players: 2, maxPlayers: 2, score1: 24, score2: 28, leads: 'Jugador_1', odds1: 2.10, odds2: 1.65, status: 'EN VIVO' },
-      { id: 'T-102', name: 'Gran Final Pampas 2v2', game: 'Truco', mode: '2v2', buyIn: 20000, players: 4, maxPlayers: 4, score1: 14, score2: 10, leads: 'Pareja A', odds1: 1.45, odds2: 2.50, status: 'EN VIVO' },
-      { id: 'T-103', name: 'Mesa Rosario Chinchón', game: 'Chinchón', mode: '1v1', buyIn: 3000, players: 2, maxPlayers: 2, score1: 45, score2: 82, leads: 'Santi_R', odds1: 1.25, odds2: 3.40, status: 'EN VIVO' },
-      { id: 'T-104', name: 'Escoba Tradicional Baires', game: 'Escoba', mode: '1v1', buyIn: 2500, players: 2, maxPlayers: 2, score1: 8, score2: 11, leads: 'El_Gaucho', odds1: 2.80, odds2: 1.35, status: 'EN VIVO' }
+    // --- Base Data & Tables ---
+    const INITIAL_TABLES = [
+      { id: 'T-101', name: 'Mesa Quilmes 1v1', game: 'Truco', mode: '1v1', tier: 'Baja', buyIn: 2000, pot: 4000, players: 2, maxPlayers: 2, score1: 18, score2: 24, leads: 'Jugador_1', odds1: 2.10, odds2: 1.65, status: 'EN VIVO', spectators: 42 },
+      { id: 'T-102', name: 'Gran Final Pampas 2v2', game: 'Truco', mode: '2v2', tier: 'Media', buyIn: 15000, pot: 60000, players: 4, maxPlayers: 4, score1: 14, score2: 10, leads: 'Pareja A', odds1: 1.45, odds2: 2.50, status: 'EN VIVO', spectators: 128 },
+      { id: 'T-103', name: 'VIP High Rollers 1v1', game: 'Truco', mode: '1v1', tier: 'Alta', buyIn: 100000, pot: 200000, players: 2, maxPlayers: 2, score1: 28, score2: 29, leads: 'Marcos_Pro', odds1: 1.90, odds2: 1.80, status: 'EN VIVO', spectators: 310 },
+      { id: 'T-104', name: 'Mesa Rosario Chinchón', game: 'Chinchón', mode: '1v1', tier: 'Baja', buyIn: 5000, pot: 10000, players: 2, maxPlayers: 2, score1: 45, score2: 82, leads: 'Santi_R', odds1: 1.25, odds2: 3.40, status: 'EN VIVO', spectators: 19 },
+      { id: 'T-105', name: 'Escoba Tradicional Baires', game: 'Escoba', mode: '1v1', tier: 'Media', buyIn: 20000, pot: 40000, players: 2, maxPlayers: 2, score1: 8, score2: 11, leads: 'El_Gaucho', odds1: 2.80, odds2: 1.35, status: 'EN VIVO', spectators: 34 },
+      { id: 'T-106', name: 'Truco Criollo 3v3 Nocturno', game: 'Truco', mode: '3v3', tier: 'Media', buyIn: 25000, pot: 150000, players: 6, maxPlayers: 6, score1: 5, score2: 12, leads: 'Equipo Azul', odds1: 3.10, odds2: 1.28, status: 'EN VIVO', spectators: 88 },
+      { id: 'T-107', name: 'Casita Robada Express', game: 'Casita Robada', mode: '1v1', tier: 'Baja', buyIn: 1000, pot: 2000, players: 2, maxPlayers: 2, score1: 12, score2: 8, leads: 'Nico_Card', odds1: 1.50, odds2: 2.30, status: 'EN VIVO', spectators: 12 },
+      { id: 'T-108', name: 'Tute Cabrón del Sur', game: 'Tute', mode: '1v1', tier: 'Alta', buyIn: 50000, pot: 100000, players: 2, maxPlayers: 2, score1: 65, score2: 40, leads: 'Don_Pedro', odds1: 1.30, odds2: 3.20, status: 'EN VIVO', spectators: 65 }
     ];
 
     const TOURNAMENTS = [
       { id: 'TR-1', title: 'Copa Nacional de Truco 1v1', game: 'Truco 1v1', buyIn: 10000, pot: 320000, status: 'Inscripciones Abiertas', registered: 28, max: 32, rounds: ['Cuartos', 'Semifinal', 'Final'] },
       { id: 'TR-2', title: 'Liga Argentina en Parejas 2v2', game: 'Truco 2v2', buyIn: 25000, pot: 800000, status: 'En Curso', registered: 16, max: 16, rounds: ['Cuartos', 'Semifinal', 'Final'] },
-      { id: 'TR-3', title: 'Master Series de Chinchón', game: 'Chinchón', buyIn: 5000, pot: 160000, status: 'Finalizando', registered: 32, max: 32, rounds: ['Semifinal', 'Final'] }
+      { id: 'TR-3', title: 'Master Series de Chinchón', game: 'Chinchón', buyIn: 5000, pot: 160000, status: 'Finalizando', registered: 32, max: 32, rounds: ['Semifinal', 'Final'] },
+      { id: 'TR-4', title: 'Super High Roller Truco $100k', game: 'Truco 1v1', buyIn: 100000, pot: 1600000, status: 'Inscripciones Abiertas', registered: 12, max: 16, rounds: ['Semifinal', 'Final'] }
     ];
 
     function App() {
-      // Navigation & View States
-      const [currentTab, setCurrentTab] = useState('apuestas'); // 'apuestas', 'jugador', 'torneos', 'backoffice'
-      const [userRole, setUserRole] = useState('apostador'); // 'apostador', 'jugador', 'operador'
-      const [selectedTable, setSelectedTable] = useState(LIVE_TABLES[0]);
+      // Main Navigation State
+      const [currentTab, setCurrentTab] = useState('apuestas'); // 'apuestas', 'mesas_lobby', 'jugador', 'torneos', 'historial', 'backoffice'
       
-      // User Account Balance
-      const [balance, setBalance] = useState(45000);
+      // Filter & Table Selection States
+      const [tableList, setTableList] = useState(INITIAL_TABLES);
+      const [selectedTable, setSelectedTable] = useState(INITIAL_TABLES[0]);
+      const [filterGame, setFilterGame] = useState('TODOS');
+      const [filterTier, setFilterTier] = useState('TODOS');
+      const [filterMode, setFilterMode] = useState('TODOS');
+
+      // Account & Wallet State
+      const [balance, setBalance] = useState(85000);
       const [showDeposit, setShowDeposit] = useState(false);
       const [depositAmount, setDepositAmount] = useState(10000);
+      const [myBetHistory, setMyBetHistory] = useState([
+        { id: 'TX-901', table: 'Mesa Quilmes 1v1', market: 'Ganador Partido', selection: 'Jugador 1', stake: 5000, odds: 2.10, status: 'PENDIENTE', payout: 10500 },
+        { id: 'TX-892', table: 'Gran Final Pampas 2v2', market: 'Falta Envido', selection: 'Sí', stake: 2000, odds: 3.20, status: 'GANADA', payout: 6400 }
+      ]);
 
-      // Betting Slip (Ticket de Apuestas)
+      // Betting Slip State
       const [betSlip, setBetSlip] = useState([]);
-      const [stakeAmount, setStakeAmount] = useState(2000);
+      const [stakeAmount, setStakeAmount] = useState(3000);
 
-      // Truco Gameplay Simulation
+      // Truco Player Interactive Engine States
       const [p1Score, setP1Score] = useState(12);
       const [p2Score, setP2Score] = useState(14);
       const [p1Cards, setP1Cards] = useState([
@@ -152,19 +173,32 @@
       const [playedCards, setPlayedCards] = useState([]);
       const [matchHistory, setMatchHistory] = useState(['Partida iniciada', 'Turno: Jugador 1']);
 
-      // Live Table Stream Simulation Loop
+      // Live Table Spectator Animation Loop
       useEffect(() => {
         const interval = setInterval(() => {
-          if (Math.random() > 0.5) {
-            const actions = ['Tira 7 de Espada', 'Canta ENVIDO!', 'Canta TRUCO!', 'Tira Ancho de Basto', 'Quiero el Truco!'];
-            const randomAction = actions[Math.floor(Math.random() * actions.length)];
-            setMatchHistory(prev => [randomAction, ...prev.slice(0, 6)]);
-          }
-        }, 3500);
+          const cardsPool = [
+            { name: '1 de Espada (Ancho)', player: 'Jugador 1' },
+            { name: '7 de Espada', player: 'Jugador 2' },
+            { name: '3 de Basto', player: 'Jugador 1' },
+            { name: '7 de Basto', player: 'Jugador 2' },
+            { name: 'Envido Cantado (+2)', player: 'Jugador 1' },
+            { name: 'Truco Cantado!', player: 'Jugador 2' }
+          ];
+          const action = cardsPool[Math.floor(Math.random() * cardsPool.length)];
+          setMatchHistory(prev => [action.player + ': ' + action.name, ...prev.slice(0, 7)]);
+        }, 3200);
         return () => clearInterval(interval);
       }, []);
 
-      // Betting Handlers
+      // Filter Handler
+      const filteredTables = tableList.filter(t => {
+        if (filterGame !== 'TODOS' && t.game !== filterGame) return false;
+        if (filterTier !== 'TODOS' && t.tier !== filterTier) return false;
+        if (filterMode !== 'TODOS' && t.mode !== filterMode) return false;
+        return true;
+      });
+
+      // Betting Slip Handlers
       const addBet = (selection, market, odds) => {
         playSound('chip');
         const betId = `${selectedTable.id}-${market}-${selection}`;
@@ -185,8 +219,22 @@
       const placeBet = () => {
         if (balance < stakeAmount || betSlip.length === 0) return;
         playSound('win');
-        setBalance(balance - stakeAmount);
-        alert(`¡Apuesta realizada con éxito! Ticket registrado por $${stakeAmount.toLocaleString()} ARS.`);
+        const newBalance = balance - stakeAmount;
+        setBalance(newBalance);
+        
+        const newTx = {
+          id: 'TX-' + Math.floor(100 + Math.random() * 900),
+          table: selectedTable.name,
+          market: betSlip[0].market,
+          selection: betSlip[0].selection,
+          stake: stakeAmount,
+          odds: betSlip[0].odds,
+          status: 'PENDIENTE',
+          payout: stakeAmount * betSlip[0].odds
+        };
+
+        setMyBetHistory([newTx, ...myBetHistory]);
+        alert(`¡Apuesta confirmada! Ticket ${newTx.id} registrado por $${stakeAmount.toLocaleString()} ARS.`);
         setBetSlip([]);
       };
 
@@ -194,8 +242,8 @@
       const playPlayerCard = (card) => {
         playSound('card');
         setP1Cards(p1Cards.filter(c => c.id !== card.id));
-        setPlayedCards([...playedCards, { ...card, player: 'Jugador 1' }]);
-        setMatchHistory(prev => [`Jugador 1 tiró ${card.name}`, ...prev]);
+        setPlayedCards([...playedCards, { ...card, player: 'Vos' }]);
+        setMatchHistory(prev => [`Jugaste: ${card.name}`, ...prev]);
 
         // Simulated AI Counter-play
         setTimeout(() => {
@@ -203,13 +251,13 @@
             playSound('card');
             const aiCard = p2Cards[0];
             setP2Cards(p2Cards.slice(1));
-            setPlayedCards(prev => [...prev, { ...aiCard, player: 'Rival (AI)' }]);
-            setMatchHistory(prev => [`Rival (AI) tiró ${aiCard.name}`, ...prev]);
+            setPlayedCards(prev => [...prev, { ...aiCard, player: 'Rival' }]);
+            setMatchHistory(prev => [`Rival jugó: ${aiCard.name}`, ...prev]);
           }
-        }, 1200);
+        }, 1100);
       };
 
-      // Matchstick Renderer for Truco Scoreboard
+      // Matchsticks Renderer
       const renderMatchsticks = (score) => {
         const total = Math.min(score, 30);
         const matches = [];
@@ -225,89 +273,107 @@
         <div class="flex flex-col min-h-screen">
           
           <!-- TOP NAVBAR -->
-          <header class="bg-slate-900 border-b border-slate-800 px-4 py-3 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50 shadow-lg">
+          <header class="bg-slate-900 border-b border-slate-800 px-4 py-3 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50 shadow-2xl">
             <div class="flex items-center space-x-3">
-              <div class="bg-emerald-600 text-slate-950 font-black p-2 rounded-lg text-xl tracking-wider shadow-md">
-                CRIOLLO<span class="text-amber-400">BET</span>
+              <div class="bg-gradient-to-r from-emerald-600 to-teal-600 text-slate-950 font-black px-3 py-1.5 rounded-xl text-xl tracking-wider shadow-lg flex items-center gap-1.5">
+                <span>🎴 CRIOLLO</span><span class="text-amber-300">BET</span>
               </div>
-              <span class="bg-emerald-950 text-emerald-400 border border-emerald-800 text-xs px-2 py-1 rounded font-semibold tracking-wide">
-                B2B iGaming Engine
+              <span class="hidden sm:inline bg-emerald-950 text-emerald-400 border border-emerald-800/80 text-[11px] px-2.5 py-0.5 rounded-full font-bold tracking-wide">
+                iGaming & Live Casino Suite
               </span>
             </div>
 
-            <!-- Main Section Switcher -->
-            <nav class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800">
+            <!-- Main Menu Tabs -->
+            <nav class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800/80 overflow-x-auto max-w-full">
               <button 
                 onClick={() => setCurrentTab('apuestas')}
-                class={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${currentTab === 'apuestas' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                class={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${currentTab === 'apuestas' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
               >
-                🔴 Casa de Apuestas
+                🔴 Apuestas en Vivo
+              </button>
+              <button 
+                onClick={() => setCurrentTab('mesas_lobby')}
+                class={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${currentTab === 'mesas_lobby' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+              >
+                🎮 Lobby de Mesas
               </button>
               <button 
                 onClick={() => setCurrentTab('jugador')}
-                class={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${currentTab === 'jugador' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                class={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${currentTab === 'jugador' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
               >
-                🃏 Mesa de Juego
+                🃏 Jugar Ahora
               </button>
               <button 
                 onClick={() => setCurrentTab('torneos')}
-                class={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${currentTab === 'torneos' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                class={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${currentTab === 'torneos' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
               >
                 🏆 Torneos
               </button>
               <button 
-                onClick={() => setCurrentTab('backoffice')}
-                class={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${currentTab === 'backoffice' ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                onClick={() => setCurrentTab('historial')}
+                class={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${currentTab === 'historial' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
               >
-                ⚙️ Operador (Backoffice)
+                📜 Mis Apuestas
+              </button>
+              <button 
+                onClick={() => setCurrentTab('backoffice')}
+                class={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${currentTab === 'backoffice' ? 'bg-amber-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+              >
+                ⚙️ B2B Operador
               </button>
             </nav>
 
-            <!-- Wallet & User Info -->
+            <!-- User Balance & Deposit -->
             <div class="flex items-center space-x-3">
-              <div class="bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800 flex items-center space-x-2">
+              <div class="bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 flex items-center space-x-2">
                 <span class="text-xs text-slate-400">Saldo:</span>
-                <span class="text-emerald-400 font-bold font-mono">${balance.toLocaleString()} ARS</span>
+                <span class="text-emerald-400 font-bold font-mono text-sm">${balance.toLocaleString()} ARS</span>
               </div>
               <button 
                 onClick={() => setShowDeposit(true)}
-                class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-sm transition-all shadow"
+                class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold px-3.5 py-1.5 rounded-xl text-xs transition-all shadow-md active:scale-95"
               >
                 + Cargar
               </button>
             </div>
           </header>
 
-          <!-- DEPOSIT MODAL -->
+          <!-- DEPOSIT & CAJERO MODAL -->
           {showDeposit && (
             <div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
               <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl max-w-md w-full shadow-2xl">
-                <h3 class="text-xl font-bold text-amber-400 mb-2">Cargar Saldo / Billetera</h3>
-                <p class="text-xs text-slate-400 mb-4">Integración con Mercado Pago, Transferencia CVU o USDT.</p>
+                <div class="flex justify-between items-center mb-3">
+                  <h3 class="text-xl font-black text-amber-400">Cajero - Cargar Saldo</h3>
+                  <button onClick={() => setShowDeposit(false)} class="text-slate-500 hover:text-slate-300 font-bold">✕</button>
+                </div>
+                <p class="text-xs text-slate-400 mb-4">Ingresá saldo inmediato mediante Mercado Pago, Transferencia CVU o USDT Crypto.</p>
+                
                 <div class="mb-4">
-                  <label class="block text-xs font-semibold text-slate-300 mb-1">Monto a depositar ($ ARS)</label>
+                  <label class="block text-xs font-semibold text-slate-300 mb-1">Monto a ingresar ($ ARS)</label>
                   <input 
                     type="number" 
                     value={depositAmount} 
                     onChange={(e) => setDepositAmount(Number(e.target.value))}
-                    class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-emerald-400 font-mono text-lg focus:outline-none focus:border-emerald-500"
+                    class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-emerald-400 font-mono font-bold text-lg focus:outline-none focus:border-emerald-500"
                   />
                 </div>
+
                 <div class="grid grid-cols-3 gap-2 mb-6">
-                  {[2000, 5000, 10000, 20000, 50000].map(amt => (
+                  {[2000, 5000, 10000, 25000, 50000, 100000].map(amt => (
                     <button 
                       key={amt}
                       onClick={() => setDepositAmount(amt)}
-                      class="bg-slate-800 hover:bg-slate-700 text-slate-200 py-1.5 rounded text-xs font-semibold"
+                      class="bg-slate-850 hover:bg-slate-800 border border-slate-700 text-slate-200 py-2 rounded-lg text-xs font-bold transition-all"
                     >
                       +${amt.toLocaleString()}
                     </button>
                   ))}
                 </div>
+
                 <div class="flex space-x-3">
                   <button 
                     onClick={() => setShowDeposit(false)}
-                    class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded-xl text-sm font-semibold"
+                    class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-2.5 rounded-xl text-xs font-bold"
                   >
                     Cancelar
                   </button>
@@ -317,9 +383,9 @@
                       setShowDeposit(false);
                       playSound('win');
                     }}
-                    class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-xl text-sm font-bold shadow-lg"
+                    class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl text-xs font-extrabold shadow-lg"
                   >
-                    Confirmar Pago
+                    Confirmar Depósito
                   </button>
                 </div>
               </div>
@@ -329,29 +395,52 @@
           <!-- MAIN CONTENT BODY -->
           <main class="flex-1 flex overflow-hidden">
             
-            {/* SECTION 1: APUESTAS (SPORTSBOOK 3-COLUMN LAYOUT) */}
+            {/* SECTION 1: CASA DE APUESTAS EN VIVO */}
             {currentTab === 'apuestas' && (
               <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 max-w-[1800px] mx-auto w-full">
                 
-                {/* Left Sidebar: Live Games List */}
-                <div class="lg:col-span-3 bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col space-y-4">
-                  <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider">Mesas en Directo</h2>
-                  <div class="space-y-2 overflow-y-auto max-h-[75vh] scrollbar-thin">
-                    {LIVE_TABLES.map(table => (
+                {/* Left Column: Filtered Live Tables */}
+                <div class="lg:col-span-3 bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col space-y-3">
+                  <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                    <h2 class="text-xs font-extrabold text-slate-300 uppercase tracking-wider">Mesas en Juego</h2>
+                    <span class="text-[10px] bg-red-950 text-red-400 px-2 py-0.5 rounded font-bold border border-red-800">
+                      ● {filteredTables.length} Activas
+                    </span>
+                  </div>
+
+                  {/* Quick Filter Bar */}
+                  <div class="space-y-2 text-xs">
+                    <div>
+                      <span class="text-[10px] text-slate-500 font-bold block mb-1">APUESTA / TIER</span>
+                      <div class="flex gap-1">
+                        {['TODOS', 'Baja', 'Media', 'Alta'].map(tier => (
+                          <button 
+                            key={tier}
+                            onClick={() => setFilterTier(tier)}
+                            class={`flex-1 py-1 rounded text-[10px] font-bold ${filterTier === tier ? 'bg-amber-500 text-slate-950' : 'bg-slate-950 text-slate-400 border border-slate-800'}`}
+                          >
+                            {tier}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* List of Tables */}
+                  <div class="space-y-2 overflow-y-auto max-h-[65vh] scrollbar-thin pr-1">
+                    {filteredTables.map(table => (
                       <div 
                         key={table.id}
                         onClick={() => setSelectedTable(table)}
-                        class={`p-3 rounded-xl border cursor-pointer transition-all ${selectedTable.id === table.id ? 'bg-slate-800 border-emerald-500 shadow-md' : 'bg-slate-950 border-slate-800 hover:border-slate-700'}`}
+                        class={`p-3 rounded-xl border cursor-pointer transition-all ${selectedTable.id === table.id ? 'bg-slate-800 border-emerald-500 shadow-md' : 'bg-slate-950 border-slate-800/80 hover:border-slate-700'}`}
                       >
                         <div class="flex justify-between items-center mb-1">
                           <span class="text-xs font-bold text-amber-400">{table.game} ({table.mode})</span>
-                          <span class="bg-red-950/80 text-red-400 border border-red-800 text-[10px] px-1.5 py-0.5 rounded font-bold animate-pulse">
-                            ● {table.status}
-                          </span>
+                          <span class="text-[10px] text-slate-400 font-mono">👥 {table.spectators} spects</span>
                         </div>
-                        <div class="text-sm font-bold text-slate-200">{table.name}</div>
-                        <div class="flex justify-between items-center mt-2 text-xs text-slate-400 font-mono">
-                          <span>Pozo: ${(table.buyIn * table.players).toLocaleString()}</span>
+                        <div class="text-xs font-bold text-slate-200">{table.name}</div>
+                        <div class="flex justify-between items-center mt-2 text-[11px] font-mono">
+                          <span class="text-slate-400">Pozo: <strong class="text-amber-300">${table.pot.toLocaleString()}</strong></span>
                           <span class="text-emerald-400 font-bold">{table.score1} - {table.score2} pts</span>
                         </div>
                       </div>
@@ -359,139 +448,143 @@
                   </div>
                 </div>
 
-                {/* Center Panel: HD Live Stream & Odds */}
+                {/* Center Column: Live Table Stream Viewer & Match Canvas */}
                 <div class="lg:col-span-6 flex flex-col space-y-4">
                   
-                  {/* Live Table Canvas View */}
+                  {/* Live Table Canvas */}
                   <div class="bg-felt border-4 border-slate-800 rounded-2xl p-6 shadow-2xl relative min-h-[380px] flex flex-col justify-between overflow-hidden">
-                    <div class="absolute inset-0 bg-radial from-transparent to-black/40 pointer-events-none"></div>
+                    <div class="absolute inset-0 bg-radial from-transparent to-black/50 pointer-events-none"></div>
                     
-                    {/* Top Bar of Match Stream */}
-                    <div class="relative z-10 flex justify-between items-center bg-black/40 backdrop-blur-md p-3 rounded-xl border border-white/10">
+                    {/* Header Stream */}
+                    <div class="relative z-10 flex justify-between items-center bg-slate-950/80 backdrop-blur-md p-3 rounded-xl border border-white/10">
                       <div>
-                        <span class="text-xs text-amber-300 font-bold uppercase">{selectedTable.game}</span>
-                        <h3 class="text-lg font-black text-white">{selectedTable.name}</h3>
+                        <span class="text-[10px] text-amber-400 font-bold uppercase tracking-wider">{selectedTable.game} - {selectedTable.mode}</span>
+                        <h3 class="text-base font-black text-white">{selectedTable.name}</h3>
                       </div>
-                      <div class="bg-slate-950/80 px-4 py-1.5 rounded-lg border border-emerald-500/30 text-right">
-                        <div class="text-[10px] text-slate-400 font-bold uppercase">Marcador de Fósforos</div>
-                        <div class="text-sm font-mono text-emerald-400 font-bold">
+                      <div class="bg-slate-900 px-3 py-1.5 rounded-lg border border-emerald-500/40 text-right">
+                        <div class="text-[9px] text-slate-400 font-bold uppercase">Anotador Fósforos</div>
+                        <div class="text-xs font-mono text-emerald-400 font-bold">
                           {selectedTable.score1} vs {selectedTable.score2} pts
                         </div>
                       </div>
                     </div>
 
-                    {/* Table Center Felt Visual */}
-                    <div class="relative z-10 my-6 flex justify-around items-center">
+                    {/* Felt Gameplay Animated Center */}
+                    <div class="relative z-10 my-4 flex justify-around items-center">
                       <div class="text-center">
-                        <div class="w-16 h-20 bg-slate-900 border-2 border-slate-700 rounded-lg flex items-center justify-center text-xs font-bold text-slate-400 mb-2 shadow-lg">
+                        <div class="w-16 h-22 bg-slate-900 border-2 border-slate-700 rounded-xl flex items-center justify-center text-xs font-bold text-slate-300 mb-1 shadow-lg">
                           Jugador 1
                         </div>
-                        <span class="text-xs bg-slate-900/80 px-2 py-1 rounded text-emerald-300 font-mono">
-                          Fósforos: {renderMatchsticks(selectedTable.score1)}
+                        <span class="text-[10px] bg-slate-950/90 px-2 py-0.5 rounded text-emerald-400 font-mono">
+                          {renderMatchsticks(selectedTable.score1)}
                         </span>
                       </div>
 
-                      <div class="bg-slate-950/90 border border-amber-500/30 px-4 py-3 rounded-xl max-w-xs w-full text-center shadow-2xl">
-                        <span class="text-[10px] text-amber-400 uppercase font-bold tracking-widest block mb-1">Últimas Jugadas en Directo</span>
+                      {/* Animated Cards Dropped on Table */}
+                      <div class="bg-slate-950/90 border border-amber-500/40 px-4 py-3 rounded-xl max-w-xs w-full text-center shadow-2xl">
+                        <span class="text-[9px] text-amber-400 uppercase font-bold tracking-widest block mb-1">Mano en vivo / Jugadas</span>
                         <div class="space-y-1 font-mono text-xs text-slate-200">
-                          {matchHistory.slice(0, 3).map((act, idx) => (
-                            <div key={idx} class="truncate">{act}</div>
+                          {matchHistory.slice(0, 4).map((act, idx) => (
+                            <div key={idx} class="truncate animate-card-drop">{act}</div>
                           ))}
                         </div>
                       </div>
 
                       <div class="text-center">
-                        <div class="w-16 h-20 bg-slate-900 border-2 border-slate-700 rounded-lg flex items-center justify-center text-xs font-bold text-slate-400 mb-2 shadow-lg">
+                        <div class="w-16 h-22 bg-slate-900 border-2 border-slate-700 rounded-xl flex items-center justify-center text-xs font-bold text-slate-300 mb-1 shadow-lg">
                           Jugador 2
                         </div>
-                        <span class="text-xs bg-slate-900/80 px-2 py-1 rounded text-emerald-300 font-mono">
-                          Fósforos: {renderMatchsticks(selectedTable.score2)}
+                        <span class="text-[10px] bg-slate-950/90 px-2 py-0.5 rounded text-emerald-400 font-mono">
+                          {renderMatchsticks(selectedTable.score2)}
                         </span>
                       </div>
                     </div>
 
-                    {/* Bottom Status */}
-                    <div class="relative z-10 flex justify-between items-center text-xs text-slate-300 bg-black/40 px-3 py-2 rounded-lg">
-                      <span>Mano actual: <strong class="text-amber-400">Envido no cantado</strong></span>
-                      <span>Modo: <strong class="text-emerald-400">Oficial Regulado</strong></span>
+                    {/* Bottom Status Stream */}
+                    <div class="relative z-10 flex justify-between items-center text-[11px] text-slate-300 bg-slate-950/80 px-3 py-1.5 rounded-lg border border-white/5">
+                      <span>Ronda: <strong class="text-amber-300">Buenas (15 a 30)</strong></span>
+                      <span>Supervisión: <strong class="text-emerald-400">Anti-Collusion Active</strong></span>
                     </div>
                   </div>
 
-                  {/* Betting Markets Feed */}
-                  <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-4">
-                    <h3 class="text-sm font-bold text-slate-300 flex items-center gap-2">
-                      <span>⚡</span> Mercados de Apuestas en Directo
+                  {/* Betting Odds Markets */}
+                  <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+                    <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                      <span>⚡</span> Mercados para Apostar desde Afuera
                     </h3>
-                    
-                    {/* Market 1: Match Winner */}
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                      <div class="text-xs font-semibold text-slate-400 mb-2">Ganador del Partido</div>
-                      <div class="grid grid-cols-2 gap-3">
-                        <button 
-                          onClick={() => addBet('Jugador 1', 'Ganador Partido', selectedTable.odds1)}
-                          class="bg-slate-900 hover:bg-emerald-950 hover:border-emerald-500 border border-slate-800 p-2.5 rounded-lg flex justify-between items-center transition-all group"
-                        >
-                          <span class="text-xs text-slate-300 group-hover:text-white">Jugador 1</span>
-                          <span class="text-sm font-bold font-mono text-emerald-400">{selectedTable.odds1.toFixed(2)}</span>
-                        </button>
-                        <button 
-                          onClick={() => addBet('Jugador 2', 'Ganador Partido', selectedTable.odds2)}
-                          class="bg-slate-900 hover:bg-emerald-950 hover:border-emerald-500 border border-slate-800 p-2.5 rounded-lg flex justify-between items-center transition-all group"
-                        >
-                          <span class="text-xs text-slate-300 group-hover:text-white">Jugador 2</span>
-                          <span class="text-sm font-bold font-mono text-emerald-400">{selectedTable.odds2.toFixed(2)}</span>
-                        </button>
-                      </div>
-                    </div>
 
-                    {/* Market 2: Next Hand Props */}
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                      <div class="text-xs font-semibold text-slate-400 mb-2">¿Se cantará Falta Envido en la mano?</div>
-                      <div class="grid grid-cols-2 gap-3">
-                        <button 
-                          onClick={() => addBet('Sí', 'Falta Envido', 3.20)}
-                          class="bg-slate-900 hover:bg-emerald-950 hover:border-emerald-500 border border-slate-800 p-2.5 rounded-lg flex justify-between items-center transition-all"
-                        >
-                          <span class="text-xs text-slate-300">Sí</span>
-                          <span class="text-sm font-bold font-mono text-emerald-400">3.20</span>
-                        </button>
-                        <button 
-                          onClick={() => addBet('No', 'Falta Envido', 1.30)}
-                          class="bg-slate-900 hover:bg-emerald-950 hover:border-emerald-500 border border-slate-800 p-2.5 rounded-lg flex justify-between items-center transition-all"
-                        >
-                          <span class="text-xs text-slate-300">No</span>
-                          <span class="text-sm font-bold font-mono text-emerald-400">1.30</span>
-                        </button>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {/* Market: Match Winner */}
+                      <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                        <div class="text-[11px] font-semibold text-slate-400 mb-2">Ganador de la Mesa</div>
+                        <div class="grid grid-cols-2 gap-2">
+                          <button 
+                            onClick={() => addBet('Jugador 1', 'Ganador Mesa', selectedTable.odds1)}
+                            class="bg-slate-900 hover:bg-emerald-950 hover:border-emerald-500 border border-slate-800 p-2 rounded-lg flex justify-between items-center transition-all"
+                          >
+                            <span class="text-xs text-slate-300">Jugador 1</span>
+                            <span class="text-xs font-bold font-mono text-emerald-400">{selectedTable.odds1.toFixed(2)}</span>
+                          </button>
+                          <button 
+                            onClick={() => addBet('Jugador 2', 'Ganador Mesa', selectedTable.odds2)}
+                            class="bg-slate-900 hover:bg-emerald-950 hover:border-emerald-500 border border-slate-800 p-2 rounded-lg flex justify-between items-center transition-all"
+                          >
+                            <span class="text-xs text-slate-300">Jugador 2</span>
+                            <span class="text-xs font-bold font-mono text-emerald-400">{selectedTable.odds2.toFixed(2)}</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Market: Props */}
+                      <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                        <div class="text-[11px] font-semibold text-slate-400 mb-2">¿Habrá Falta Envido en la mano?</div>
+                        <div class="grid grid-cols-2 gap-2">
+                          <button 
+                            onClick={() => addBet('Sí', 'Falta Envido', 2.85)}
+                            class="bg-slate-900 hover:bg-emerald-950 hover:border-emerald-500 border border-slate-800 p-2 rounded-lg flex justify-between items-center transition-all"
+                          >
+                            <span class="text-xs text-slate-300">Sí</span>
+                            <span class="text-xs font-bold font-mono text-emerald-400">2.85</span>
+                          </button>
+                          <button 
+                            onClick={() => addBet('No', 'Falta Envido', 1.35)}
+                            class="bg-slate-900 hover:bg-emerald-950 hover:border-emerald-500 border border-slate-800 p-2 rounded-lg flex justify-between items-center transition-all"
+                          >
+                            <span class="text-xs text-slate-300">No</span>
+                            <span class="text-xs font-bold font-mono text-emerald-400">1.35</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
+
                 </div>
 
-                {/* Right Sidebar: Bet Slip (Ticket) */}
+                {/* Right Column: Bet Slip (Ticket de Apuestas) */}
                 <div class="lg:col-span-3 bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
                   <div>
-                    <div class="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
-                      <h3 class="text-sm font-bold text-amber-400">Boleto de Apuestas</h3>
-                      <span class="bg-amber-500/10 text-amber-400 text-xs px-2 py-0.5 rounded font-bold font-mono">
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-3 mb-3">
+                      <h3 class="text-xs font-extrabold text-amber-400 uppercase">Cupón de Apuestas</h3>
+                      <span class="bg-amber-500/20 text-amber-400 text-[10px] px-2 py-0.5 rounded font-mono font-bold">
                         {betSlip.length} Selección(es)
                       </span>
                     </div>
 
                     {betSlip.length === 0 ? (
                       <div class="text-center py-12 text-slate-500 text-xs">
-                        Hacé clic en cualquier cuota para agregar una apuesta al ticket.
+                        Seleccioná cualquier cuota para armar tu ticket de apuesta.
                       </div>
                     ) : (
-                      <div class="space-y-3 mb-4 max-h-[40vh] overflow-y-auto scrollbar-thin">
+                      <div class="space-y-2 mb-4 max-h-[40vh] overflow-y-auto scrollbar-thin">
                         {betSlip.map(bet => (
-                          <div key={bet.id} class="bg-slate-950 p-3 rounded-xl border border-slate-800 relative group">
+                          <div key={bet.id} class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 relative">
                             <button 
                               onClick={() => removeBet(bet.id)}
                               class="absolute top-2 right-2 text-slate-500 hover:text-red-400 text-xs font-bold"
                             >
                               ✕
                             </button>
-                            <div class="text-[10px] text-amber-400 font-semibold">{bet.table}</div>
+                            <div class="text-[10px] text-amber-400 font-bold">{bet.table}</div>
                             <div class="text-xs font-bold text-slate-200 mt-0.5">{bet.market}: {bet.selection}</div>
                             <div class="text-right text-xs font-mono font-bold text-emerald-400 mt-1">
                               Cuota: {bet.odds.toFixed(2)}
@@ -503,27 +596,27 @@
                   </div>
 
                   {betSlip.length > 0 && (
-                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
+                    <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-3">
                       <div>
-                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Monto de Apuesta ($ ARS)</label>
+                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Monto a Apostar ($ ARS)</label>
                         <input 
                           type="number"
                           value={stakeAmount}
                           onChange={(e) => setStakeAmount(Number(e.target.value))}
-                          class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-emerald-400 font-mono font-bold text-right focus:outline-none"
+                          class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-emerald-400 font-mono font-bold text-right text-sm focus:outline-none"
                         />
                       </div>
-                      <div class="flex justify-between text-xs text-slate-400">
-                        <span>Ganancia Potencial:</span>
-                        <span class="text-emerald-400 font-bold font-mono">
+                      <div class="flex justify-between text-xs text-slate-400 font-mono">
+                        <span>Retorno Potencial:</span>
+                        <span class="text-emerald-400 font-bold">
                           ${(stakeAmount * betSlip.reduce((acc, b) => acc * b.odds, 1)).toFixed(2)} ARS
                         </span>
                       </div>
                       <button 
                         onClick={placeBet}
-                        class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-sm transition-all shadow-lg"
+                        class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3 rounded-xl text-xs transition-all shadow-lg"
                       >
-                        Apostar Ahora
+                        Confirmar Apuesta
                       </button>
                     </div>
                   )}
@@ -532,15 +625,132 @@
               </div>
             )}
 
-            {/* SECTION 2: MESA DE JUEGO (PLAYER INTERACTIVE CANVAS) */}
+            {/* SECTION 2: LOBBY COMPLETO DE MESAS CON FILTROS */}
+            {currentTab === 'mesas_lobby' && (
+              <div class="flex-1 p-6 max-w-7xl mx-auto w-full space-y-6 overflow-y-auto">
+                <div class="flex flex-wrap justify-between items-center gap-4 border-b border-slate-800 pb-4">
+                  <div>
+                    <h2 class="text-2xl font-black text-amber-400">Lobby Global de Mesas de Cartas</h2>
+                    <p class="text-xs text-slate-400">Filtrá mesas según el valor de entrada (buy-in), modalidad o tipo de juego criollo.</p>
+                  </div>
+                  <button onClick={() => alert('Creando nueva mesa personalizada...')} class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-lg">
+                    + Crear Mesa Privada
+                  </button>
+                </div>
+
+                {/* Filter Selector Header */}
+                <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Tipo de Juego</label>
+                    <select 
+                      value={filterGame} 
+                      onChange={(e) => setFilterGame(e.target.value)}
+                      class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2 text-xs text-slate-200 focus:outline-none"
+                    >
+                      <option value="TODOS">Todos los Juegos</option>
+                      <option value="Truco">Truco Argentino</option>
+                      <option value="Chinchón">Chinchón</option>
+                      <option value="Escoba">Escoba de 15</option>
+                      <option value="Casita Robada">Casita Robada</option>
+                      <option value="Tute">Tute Cabrón</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Rango de Apuestas (Buy-in)</label>
+                    <select 
+                      value={filterTier} 
+                      onChange={(e) => setFilterTier(e.target.value)}
+                      class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2 text-xs text-slate-200 focus:outline-none"
+                    >
+                      <option value="TODOS">Cualquier Monto</option>
+                      <option value="Baja">Baja ($1,000 - $5,000 ARS)</option>
+                      <option value="Media">Media ($15,000 - $25,000 ARS)</option>
+                      <option value="Alta">High Rollers ($50,000+ ARS)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Modalidad</label>
+                    <select 
+                      value={filterMode} 
+                      onChange={(e) => setFilterMode(e.target.value)}
+                      class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2 text-xs text-slate-200 focus:outline-none"
+                    >
+                      <option value="TODOS">Todas las Modalidades</option>
+                      <option value="1v1">Mano a Mano (1v1)</option>
+                      <option value="2v2">Parejas (2v2)</option>
+                      <option value="3v3">Trios (3v3)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Grid of Tables */}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredTables.map(t => (
+                    <div key={t.id} class="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between space-y-4 shadow-xl hover:border-slate-700 transition-all">
+                      <div class="flex justify-between items-start">
+                        <div>
+                          <span class="text-[10px] font-bold text-amber-400 bg-amber-950/80 px-2 py-0.5 rounded border border-amber-800">
+                            {t.game} • {t.mode}
+                          </span>
+                          <h3 class="text-base font-bold text-slate-100 mt-2">{t.name}</h3>
+                        </div>
+                        <span class="text-xs text-emerald-400 font-bold font-mono bg-emerald-950/80 px-2 py-1 rounded">
+                          {t.tier} Tier
+                        </span>
+                      </div>
+
+                      <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2 font-mono text-xs">
+                        <div class="flex justify-between">
+                          <span class="text-slate-400">Entrada (Buy-in):</span>
+                          <span class="text-amber-400 font-bold">${t.buyIn.toLocaleString()}</span>
+                        </div>
+                        <div class="flex justify-between">
+                          <span class="text-slate-400">Pozo Total en Juego:</span>
+                          <span class="text-emerald-400 font-bold">${t.pot.toLocaleString()}</span>
+                        </div>
+                        <div class="flex justify-between">
+                          <span class="text-slate-400">Jugadores / Sillas:</span>
+                          <span class="text-slate-200">{t.players} / {t.maxPlayers}</span>
+                        </div>
+                      </div>
+
+                      <div class="flex space-x-2">
+                        <button 
+                          onClick={() => {
+                            setSelectedTable(t);
+                            setCurrentTab('jugador');
+                          }}
+                          class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl text-xs transition-all shadow"
+                        >
+                          Sentarse a Jugar
+                        </button>
+                        <button 
+                          onClick={() => {
+                            setSelectedTable(t);
+                            setCurrentTab('apuestas');
+                          }}
+                          class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-3 py-2.5 rounded-xl text-xs transition-all"
+                        >
+                          👁️ Espectar
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* SECTION 3: MESA INTERACTIVA DEL JUGADOR */}
             {currentTab === 'jugador' && (
-              <div class="flex-1 p-4 max-w-5xl mx-auto w-full flex flex-col justify-between">
+              <div class="flex-1 p-4 max-w-5xl mx-auto w-full flex flex-col justify-between overflow-y-auto">
                 
                 {/* Scoreboard Header */}
                 <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex justify-between items-center shadow-lg">
                   <div>
-                    <h2 class="text-lg font-black text-amber-400">Mesa 1v1 - Truco Argentino</h2>
-                    <p class="text-xs text-slate-400">Partida Oficial por Pozo de $10,000 ARS</p>
+                    <h2 class="text-lg font-black text-amber-400">{selectedTable.name}</h2>
+                    <p class="text-xs text-slate-400">Entrada: ${selectedTable.buyIn.toLocaleString()} | Pozo: ${selectedTable.pot.toLocaleString()} ARS</p>
                   </div>
                   <div class="flex space-x-6 text-right font-mono">
                     <div>
@@ -554,10 +764,10 @@
                   </div>
                 </div>
 
-                {/* Felt Game Table */}
-                <div class="my-4 bg-felt border-8 border-slate-800 rounded-3xl p-6 min-h-[420px] shadow-2xl relative flex flex-col justify-between overflow-hidden">
+                {/* Felt Table Canvas */}
+                <div class="my-4 bg-felt border-8 border-slate-800 rounded-3xl p-6 min-h-[400px] shadow-2xl relative flex flex-col justify-between overflow-hidden">
                   
-                  {/* Opponent Cards (Face Down) */}
+                  {/* Opponent Cards */}
                   <div class="flex justify-center space-x-3">
                     {p2Cards.map((_, i) => (
                       <div key={i} class="w-16 h-24 bg-red-900 border-2 border-white/20 rounded-lg shadow-md flex items-center justify-center text-xs font-bold text-red-300">
@@ -569,7 +779,7 @@
                   {/* Played Cards Area */}
                   <div class="flex justify-center items-center space-x-6 my-4">
                     {playedCards.map((c, i) => (
-                      <div key={i} class="bg-white border-2 border-slate-300 rounded-lg w-20 h-28 p-2 flex flex-col justify-between shadow-xl animate-bounce">
+                      <div key={i} class="bg-white border-2 border-slate-300 rounded-lg w-20 h-28 p-2 flex flex-col justify-between shadow-xl animate-card-drop">
                         <span class="text-xs font-bold text-slate-900">{c.num}</span>
                         <span class="text-center text-lg">{c.suit === 'espada' ? '⚔️' : c.suit === 'basto' ? '🪵' : c.suit === 'oro' ? '🪙' : '🍷'}</span>
                         <span class="text-[9px] text-slate-500 font-bold truncate">{c.player}</span>
@@ -577,7 +787,7 @@
                     ))}
                   </div>
 
-                  {/* Player Hand Cards */}
+                  {/* Player Cards */}
                   <div class="flex justify-center space-x-4">
                     {p1Cards.map((card) => (
                       <button 
@@ -593,18 +803,18 @@
                   </div>
                 </div>
 
-                {/* Game Action Buttons */}
+                {/* Truco Action Buttons */}
                 <div class="grid grid-cols-4 gap-3 bg-slate-900 border border-slate-800 p-3 rounded-2xl">
-                  <button onClick={() => playSound('chip')} class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl text-xs transition-all shadow">
+                  <button onClick={() => playSound('chip')} class="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-2.5 rounded-xl text-xs transition-all shadow">
                     ENVIDO
                   </button>
-                  <button onClick={() => playSound('chip')} class="bg-amber-600 hover:bg-amber-500 text-white font-bold py-2.5 rounded-xl text-xs transition-all shadow">
+                  <button onClick={() => playSound('chip')} class="bg-amber-600 hover:bg-amber-500 text-white font-extrabold py-2.5 rounded-xl text-xs transition-all shadow">
                     TRUCO
                   </button>
-                  <button onClick={() => playSound('chip')} class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-xl text-xs transition-all shadow">
+                  <button onClick={() => playSound('chip')} class="bg-blue-600 hover:bg-blue-500 text-white font-extrabold py-2.5 rounded-xl text-xs transition-all shadow">
                     QUIERO
                   </button>
-                  <button onClick={() => playSound('chip')} class="bg-red-600 hover:bg-red-500 text-white font-bold py-2.5 rounded-xl text-xs transition-all shadow">
+                  <button onClick={() => playSound('chip')} class="bg-red-600 hover:bg-red-500 text-white font-extrabold py-2.5 rounded-xl text-xs transition-all shadow">
                     IRSE AL MAZO
                   </button>
                 </div>
@@ -612,19 +822,19 @@
               </div>
             )}
 
-            {/* SECTION 3: TORNEOS */}
+            {/* SECTION 4: TORNEOS */}
             {currentTab === 'torneos' && (
-              <div class="flex-1 p-6 max-w-6xl mx-auto w-full space-y-6">
+              <div class="flex-1 p-6 max-w-6xl mx-auto w-full space-y-6 overflow-y-auto">
                 <div>
-                  <h2 class="text-2xl font-black text-amber-400">Torneos Oficiales P2P</h2>
-                  <p class="text-xs text-slate-400">Competí en llaves eliminatorias con pozo garantizado y rake transparente.</p>
+                  <h2 class="text-2xl font-black text-amber-400">Torneos Oficiales Eliminatorios</h2>
+                  <p class="text-xs text-slate-400">Inscripción directa con pozo garantizado y comisiones automáticas.</p>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {TOURNAMENTS.map(t => (
                     <div key={t.id} class="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between space-y-4 shadow-xl">
                       <div>
-                        <span class="text-xs font-bold text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">
+                        <span class="text-xs font-bold text-emerald-400 bg-emerald-950 px-2.5 py-0.5 rounded border border-emerald-800">
                           {t.status}
                         </span>
                         <h3 class="text-lg font-bold text-slate-100 mt-2">{t.title}</h3>
@@ -637,20 +847,20 @@
                           <span class="text-amber-400 font-bold">${t.buyIn.toLocaleString()}</span>
                         </div>
                         <div class="flex justify-between">
-                          <span class="text-slate-400">Pozo Acumulado:</span>
+                          <span class="text-slate-400">Pozo Total:</span>
                           <span class="text-emerald-400 font-bold">${t.pot.toLocaleString()}</span>
                         </div>
                         <div class="flex justify-between">
-                          <span class="text-slate-400">Inscriptos:</span>
+                          <span class="text-slate-400">Jugadores:</span>
                           <span class="text-slate-200">{t.registered} / {t.max}</span>
                         </div>
                       </div>
 
                       <button 
-                        onClick={() => alert(`Te has inscripto en ${t.title}`)}
-                        class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition-all shadow"
+                        onClick={() => alert(`Te has inscripto con éxito en: ${t.title}`)}
+                        class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-2.5 rounded-xl text-xs transition-all shadow"
                       >
-                        Inscribirse ($ {t.buyIn.toLocaleString()} ARS)
+                        Inscribirme ($ {t.buyIn.toLocaleString()} ARS)
                       </button>
                     </div>
                   ))}
@@ -658,37 +868,80 @@
               </div>
             )}
 
-            {/* SECTION 4: OPERADOR BACKOFFICE (B2B DEMO) */}
-            {currentTab === 'backoffice' && (
-              <div class="flex-1 p-6 max-w-6xl mx-auto w-full space-y-6">
+            {/* SECTION 5: HISTORIAL DE APUESTAS DEL JUGADOR */}
+            {currentTab === 'historial' && (
+              <div class="flex-1 p-6 max-w-5xl mx-auto w-full space-y-6 overflow-y-auto">
                 <div>
-                  <h2 class="text-2xl font-black text-amber-400">Panel de Control B2B del Operador</h2>
-                  <p class="text-xs text-slate-400">Métricas de rentabilidad GGR/NGR, Rake de mesas, auditoría Seamless Wallet y prevención de fraude.</p>
+                  <h2 class="text-2xl font-black text-amber-400">Historial de Mis Apuestas</h2>
+                  <p class="text-xs text-slate-400">Registro completo de tickets realizados desde afuera en partidas en directo.</p>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                  <table class="w-full text-left border-collapse">
+                    <thead>
+                      <tr class="bg-slate-950 text-slate-400 text-[11px] uppercase border-b border-slate-800 font-bold">
+                        <th class="p-3.5">ID Ticket</th>
+                        <th class="p-3.5">Mesa / Evento</th>
+                        <th class="p-3.5">Mercado & Selección</th>
+                        <th class="p-3.5">Apostado</th>
+                        <th class="p-3.5">Cuota</th>
+                        <th class="p-3.5">Estado</th>
+                        <th class="p-3.5 text-right">Retorno</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-800 text-xs font-mono">
+                      {myBetHistory.map(tx => (
+                        <tr key={tx.id} class="hover:bg-slate-850/50">
+                          <td class="p-3.5 text-amber-400 font-bold">{tx.id}</td>
+                          <td class="p-3.5 font-sans font-bold text-slate-200">{tx.table}</td>
+                          <td class="p-3.5 text-slate-300">{tx.market} ({tx.selection})</td>
+                          <td class="p-3.5 text-slate-300">${tx.stake.toLocaleString()}</td>
+                          <td class="p-3.5 text-emerald-400 font-bold">{tx.odds.toFixed(2)}</td>
+                          <td class="p-3.5">
+                            <span class={`px-2 py-0.5 rounded text-[10px] font-extrabold ${tx.status === 'GANADA' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-amber-950 text-amber-400 border border-amber-800'}`}>
+                              {tx.status}
+                            </span>
+                          </td>
+                          <td class="p-3.5 text-right text-emerald-400 font-bold">${tx.payout.toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* SECTION 6: B2B OPERADOR BACKOFFICE */}
+            {currentTab === 'backoffice' && (
+              <div class="flex-1 p-6 max-w-6xl mx-auto w-full space-y-6 overflow-y-auto">
+                <div>
+                  <h2 class="text-2xl font-black text-amber-400">Panel B2B para Operadores de Casino</h2>
+                  <p class="text-xs text-slate-400">Configuración de Rake, integración API Seamless Wallet y logs de monitoreo en tiempo real.</p>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
                   <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
-                    <div class="text-xs text-slate-400 font-bold">GGR Total (Bruto)</div>
-                    <div class="text-xl font-bold font-mono text-emerald-400 mt-1">$14,850,000 ARS</div>
+                    <div class="text-xs text-slate-400 font-bold">GGR Acumulado</div>
+                    <div class="text-xl font-bold font-mono text-emerald-400 mt-1">$28,400,000 ARS</div>
                   </div>
                   <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
-                    <div class="text-xs text-slate-400 font-bold">Comisión Rake Operador</div>
-                    <div class="text-xl font-bold font-mono text-amber-400 mt-1">5.0%</div>
+                    <div class="text-xs text-slate-400 font-bold">Rake de Mesas Configurado</div>
+                    <div class="text-xl font-bold font-mono text-amber-400 mt-1">4.5%</div>
                   </div>
                   <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
                     <div class="text-xs text-slate-400 font-bold">Jugadores Conectados (CCU)</div>
-                    <div class="text-xl font-bold font-mono text-blue-400 mt-1">1,240</div>
+                    <div class="text-xl font-bold font-mono text-blue-400 mt-1">1,890</div>
                   </div>
                   <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
-                    <div class="text-xs text-slate-400 font-bold">Licencia y Regulación</div>
-                    <div class="text-xs font-bold font-mono text-emerald-400 mt-2">LOTBA / ALEA OK</div>
+                    <div class="text-xs text-slate-400 font-bold">Certificación iGaming</div>
+                    <div class="text-xs font-bold font-mono text-emerald-400 mt-2">ALEA / GLI-19 READY</div>
                   </div>
                 </div>
 
-                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-4">
-                  <h3 class="text-sm font-bold text-slate-200">Snippet de Integración iFrame B2B</h3>
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-3">
+                  <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider">Código de Integración iFrame B2B</h3>
                   <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 font-mono text-xs text-emerald-400 overflow-x-auto">
-                    {`<iframe src="https://engine.criollobet.com/v1/lobby?operator_id=CASINO_DEMO&token=AUTH_TOKEN" width="100%" height="700" frameborder="0" allow="autoplay"></iframe>`}
+                    {`<iframe src="https://engine.criollobet.com/v1/lobby?operator_id=CASINO_ARG&token=AUTH_TOKEN" width="100%" height="750" frameborder="0" allow="autoplay"></iframe>`}
                   </div>
                 </div>
               </div>
@@ -699,7 +952,7 @@
       );
     }
 
-    // Render App
+    // Render React Root
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<App />);
   </script>
